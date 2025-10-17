@@ -21,12 +21,9 @@ import {
 
 const LeaveForm = () => {
   const [fromDate, setFromDate] = useState(null);
-  const [employeeName, setEmployeeName] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
   const [toDate, setToDate] = useState(null);
   const [reason, setReason] = useState("");
   const [openSnack, setOpenSnack] = useState(false);
-
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -56,21 +53,6 @@ const LeaveForm = () => {
               sx={{ mt: 2 , alignItems: 'center' }}
             >
 
-                <TextField
-                  label="Employee ID"
-                  variant="outlined"
-                  fullWidth
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                />
-
-                <TextField
-                  label="Employee Name"
-                  variant="outlined"
-                  fullWidth
-                  value={employeeName}
-                  onChange={(e) => setEmployeeName(e.target.value)}
-                />
               
                 <DatePicker
                   label="From Date"

@@ -1,5 +1,8 @@
+import Button from "../components/MuiButton";
 import LeaveForm from "../components/LeaveForm"
 import LeaveTable from "../components/LeaveTable"
+import StatusFilter from "../components/StatusFilter";
+import React from "react";
 
 const leaves = [
   {
@@ -26,9 +29,12 @@ const leaves = [
 ];
 
 const EmployeeDashboard = () => {
+  const [statusFilter, setStatusFilter] = React.useState("")
   return (
     <>
+      <StatusFilter statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
       <LeaveTable leaves={leaves} />
+      <Button/>
     </>
   )
 }
