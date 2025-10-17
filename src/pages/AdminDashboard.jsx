@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import StatusFilter from '../components/StatusFilter.jsx'
 import LeaveTable from '../components/LeaveTable.jsx'
-import EmployeeFilter from '../components/EmployeeFilter.jsx';
+import CombinedFilter from '../components/CombinedFilter.jsx';
+import DashboardStats from '../components/DashboardStats.jsx';
 import { Box, Typography, CircularProgress, Alert, Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchLeaves, setStatusFilter, setEmployeeFilter, clearFilters } from '../store/slices/leavesSlice';
@@ -10,6 +10,7 @@ const AdminDashboard = () => {
   const dispatch = useAppDispatch();
   const { 
     filteredLeaves, 
+    leaves, // Use all leaves for stats, not filtered ones
     isLoading, 
     error, 
     statusFilter,
@@ -70,11 +71,18 @@ const AdminDashboard = () => {
 
   return (
     <>
-      <EmployeeFilter 
+      {/* Dashboard Statistics */}
+      <DashboardStats leaves={leaves} />
+      
+      {/* Combined Filters */}
+      <CombinedFilter 
         searchName={searchTerm} 
-        setSearchName={handleEmployeeFilterChange} 
+        setSearchName={handleEmployeeFilterChange}
+        statusFilter={statusFilter}
+        setStatusFilter={handleStatusFilterChange}
       />
-      <StatusFilter statusFilter={statusFilter} setStatusFilter={handleStatusFilterChange} />
+      
+      {/* Results Summary */}
       <Box sx={{ mt: 2, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         {/* <Typography variant="body2" color="text.secondary">
           {filteredLeaves.length === 0 && (statusFilter || employeeFilter) 
@@ -92,6 +100,8 @@ const AdminDashboard = () => {
           </Button>
         )}
       </Box>
+      
+      {/* Leave Table */}
       <LeaveTable leaves={filteredLeaves} onLeaveUpdate={handleLeaveUpdate} isAdmin={true} />
     </>
   )

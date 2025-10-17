@@ -1,31 +1,32 @@
 import '@testing-library/jest-dom'
 import { configure } from '@testing-library/react'
+import { vi } from 'vitest'
 
 // Configure testing library
 configure({ testIdAttribute: 'data-testid' })
 
 // Mock axios
 import axios from 'axios'
-jest.mock('axios')
+vi.mock('axios')
 const mockedAxios = axios
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 }
 global.localStorage = localStorageMock
 
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,
-  log: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
+  log: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
 }
 
 export { mockedAxios }
