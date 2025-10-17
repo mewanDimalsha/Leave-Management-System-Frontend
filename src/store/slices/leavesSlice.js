@@ -141,9 +141,22 @@ const applyFilters = (state) => {
   
   // Apply employee filter
   if (state.employeeFilter) {
-    filtered = filtered.filter(leave => 
-      leave.employee && leave.employee.toLowerCase().includes(state.employeeFilter.toLowerCase())
-    );
+    const searchTerm = state.employeeFilter.toLowerCase().trim();
+    filtered = filtered.filter(leave => {
+      // Handle different employee field structures
+      let employeeName = '';
+      
+      if (leave.employee) {
+        if (typeof leave.employee === 'string') {
+          employeeName = leave.employee;
+        } else if (typeof leave.employee === 'object' && leave.employee.name) {
+          employeeName = leave.employee.name;
+        }
+      }
+      
+      // Return true if employee name contains the search term
+      return employeeName.toLowerCase().includes(searchTerm);
+    });
   }
   
   state.filteredLeaves = filtered;

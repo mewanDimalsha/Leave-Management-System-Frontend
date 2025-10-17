@@ -149,8 +149,17 @@ const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
               </TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {safeLeaves.map((leave, index) => (
+              <TableBody>
+                {safeLeaves.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body1" color="text.secondary">
+                        No leave requests found
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  safeLeaves.map((leave, index) => (
               <TableRow
                 key={leave._id || leave.id || index}
                 sx={{
@@ -219,10 +228,11 @@ const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
                       </>
                     )
                   )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+                    </TableCell>
+                  </TableRow>
+                  ))
+                )}
+              </TableBody>
         </Table>
       </TableContainer>
     </Box>

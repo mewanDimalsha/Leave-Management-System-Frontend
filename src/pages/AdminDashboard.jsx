@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import StatusFilter from '../components/StatusFilter.jsx'
 import LeaveTable from '../components/LeaveTable.jsx'
 import EmployeeFilter from '../components/EmployeeFilter.jsx';
@@ -16,19 +16,32 @@ const AdminDashboard = () => {
     employeeFilter 
   } = useAppSelector((state) => state.leaves);
 
+  // Local state for debounced search
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     dispatch(fetchLeaves());
   }, [dispatch]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      dispatch(setEmployeeFilter(searchTerm));
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, dispatch]);
 
   const handleStatusFilterChange = (newFilter) => {
     dispatch(setStatusFilter(newFilter));
   };
 
   const handleEmployeeFilterChange = (employeeName) => {
-    dispatch(setEmployeeFilter(employeeName));
+    setSearchTerm(employeeName);
   };
 
   const handleClearFilters = () => {
+    setSearchTerm('');
     dispatch(clearFilters());
   };
 
@@ -58,15 +71,17 @@ const AdminDashboard = () => {
   return (
     <>
       <EmployeeFilter 
-        searchName={employeeFilter} 
+        searchName={searchTerm} 
         setSearchName={handleEmployeeFilterChange} 
       />
       <StatusFilter statusFilter={statusFilter} setStatusFilter={handleStatusFilterChange} />
       <Box sx={{ mt: 2, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          Showing {filteredLeaves.length} leave requests
-          {(statusFilter || employeeFilter) && ' (filtered)'}
-        </Typography>
+        {/* <Typography variant="body2" color="text.secondary">
+          {filteredLeaves.length === 0 && (statusFilter || employeeFilter) 
+            ? 'No leave requests found matching your filters'
+            : `Showing ${filteredLeaves.length} leave requests${(statusFilter || employeeFilter) ? ' (filtered)' : ''}`
+          }
+        </Typography> */}
         {(statusFilter || employeeFilter) && (
           <Button 
             variant="outlined" 
