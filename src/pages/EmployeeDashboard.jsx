@@ -1,4 +1,4 @@
-import Button from "../components/MuiButton";
+import MuiButton from "../components/MuiButton";
 import LeaveForm from "../components/LeaveForm"
 import LeaveTable from "../components/LeaveTable"
 import StatusFilter from "../components/StatusFilter";
@@ -34,7 +34,7 @@ const EmployeeDashboard = () => {
     <>
       <StatusFilter statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
       <LeaveTable leaves={leaves} />
-      <Button/>
+      <MuiButton/>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { Routes } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import './App.css'
 import AdminDashboard from './pages/AdminDashboard'
 import EmployeeDashboard from './pages/EmployeeDashboard'
@@ -10,12 +10,12 @@ function App() {
   return (
     <Routes>
       <Route path="/admin" element={
-        <ProtectedRoute>
+        <ProtectedRoute requiredRole="admin">
           <AdminDashboard />
         </ProtectedRoute>
       } />
       <Route path="/employee" element={
-        <ProtectedRoute>
+        <ProtectedRoute requiredRole="user">
           <EmployeeDashboard />
         </ProtectedRoute>
       } />

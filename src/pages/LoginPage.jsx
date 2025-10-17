@@ -7,44 +7,66 @@ import {
   Divider,
   TextField,
   Button,
-  Snackbar,
-  Alert,
-  Box,
 } from "@mui/material";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const LoginPage = () => {
-
   const navigate = useNavigate();
-
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [openSnack, setOpenSnack] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Basic validation
-    if (!username.trim() || !password.trim()) {
-      setError("Please fill in all fields");
-      setOpenSnack(true);
+    if (!name.trim() || !password.trim()) {
+      alert("Please fill in all fields");
       return;
     }
 
-    // Here you would typically make an API call to authenticate
-    console.log("Login attempt:", { username, password });
-    navigate('/employee');
-    // For demo purposes, show success message
-    setError("");
-    setOpenSnack(true);
-    
-    // Reset form
-    setUsername("");
-    setPassword("");
+    try {
+      // Make API call to backend login endpoint using axios
+      const response = await axios.post('http://localhost:5001/api/auth/login', {
+        name: name.trim(),
+        password: password.trim()
+      });
+
+      const data = response.data;
+
+      // Store token and user info
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userRole', data.role);
+      localStorage.setItem('userName', data.name);
+      
+      // Role-based redirection
+      if (data.role === 'admin') {
+        navigate('/admin');
+      } else if (data.role === 'user') {
+        navigate('/employee');
+      } else {
+        alert("Invalid user role");
+        return;
+      }
+      
+      // Reset form
+      setName("");
+      setPassword("");
+    } catch (error) {
+      console.error('Login error:', error);
+      
+      // Handle axios error response
+      if (error.response) {
+        alert(error.response.data.message || "Login failed");
+      } else if (error.request) {
+        alert("Network error. Please check your connection.");
+      } else {
+        alert("An unexpected error occurred. Please try again.");
+      }
+    }
   };
 
   return (
@@ -76,11 +98,11 @@ const LoginPage = () => {
           onSubmit={handleSubmit}
         >
           <TextField
-            label="Username"
+            label="Name"
             fullWidth
             variant="outlined"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             InputProps={{
               startAdornment: <PersonIcon sx={{ mr: 1, color: 'action.active' }} />
             }}
@@ -104,7 +126,6 @@ const LoginPage = () => {
             endIcon={<LoginIcon />}
             type="submit"
             fullWidth
-            onClick={()=>{handleSubmit}}
             sx={{
               px: 3,
               py: 1.5,
@@ -119,20 +140,6 @@ const LoginPage = () => {
           </Button>
         </Stack>
       </Paper>
-      
-      <Snackbar
-        open={openSnack}
-        autoHideDuration={3000}
-        onClose={() => setOpenSnack(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert 
-          severity={error ? "error" : "success"} 
-          variant="filled"
-        >
-          {error || "Login successful!"}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };
