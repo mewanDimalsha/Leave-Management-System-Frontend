@@ -34,9 +34,10 @@ const LoginPage = () => {
         name: name.trim(),
         password: password.trim()
       });
-
+      
       const data = response.data;
-
+      console.log('Login response data:', data);
+      
       // Store token and user info
       localStorage.setItem('token', data.token);
       localStorage.setItem('userRole', data.role);

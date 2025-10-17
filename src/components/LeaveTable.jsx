@@ -1,16 +1,161 @@
-import { Box, Typography, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, IconButton, Chip} from '@mui/material'
+import { Box, Typography, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, IconButton, Chip, Button} from '@mui/material'
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const LeaveTable = ({ leaves }) => {
+const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
+  const navigate = useNavigate();
 
-  const handleEdit = (id) => {
-    console.log("Edit leave:", id);
+  const handleEdit = (leave) => {
+    console.log("Edit leave:", leave);
+    // Navigate to edit form with leave data
+    navigate('/leave-form', { 
+      state: { 
+        editMode: true, 
+        leaveData: leave 
+      } 
+    });
   };
 
-  const handleCancel = (id) => {
-    console.log("Cancel leave:", id);
+  const handleCancel = async (leaveId) => {
+    if (!window.confirm('Are you sure you want to cancel this leave request?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please login again.');
+        return;
+      }
+
+      const response = await axios.delete(`http://localhost:5001/api/leaves/${leaveId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Leave cancelled successfully:', response.data);
+      alert('Leave request cancelled successfully!');
+      
+      // Refresh the leaves data
+      if (onLeaveUpdate) {
+        onLeaveUpdate();
+      }
+    } catch (error) {
+      console.error('Error cancelling leave:', error);
+      
+      if (error.response) {
+        alert(error.response.data.message || 'Failed to cancel leave request');
+      } else if (error.request) {
+        alert('Network error. Please check your connection.');
+      } else {
+        alert('An unexpected error occurred. Please try again.');
+      }
+    }
   };
+
+  // Admin functions
+  const handleApprove = async (leaveId) => {
+    if (!window.confirm('Are you sure you want to approve this leave request?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please login again.');
+        return;
+      }
+
+      const response = await axios.put(`http://localhost:5001/api/leaves/${leaveId}`, {
+        status: 'Approved'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Leave approved successfully:', response.data);
+      alert('Leave request approved successfully!');
+      
+      // Refresh the leaves data
+      if (onLeaveUpdate) {
+        onLeaveUpdate();
+      }
+    } catch (error) {
+      console.error('Error approving leave:', error);
+      
+      if (error.response) {
+        alert(error.response.data.message || 'Failed to approve leave request');
+      } else if (error.request) {
+        alert('Network error. Please check your connection.');
+      } else {
+        alert('An unexpected error occurred. Please try again.');
+      }
+    }
+  };
+
+  const handleReject = async (leaveId) => {
+    if (!window.confirm('Are you sure you want to reject this leave request?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please login again.');
+        return;
+      }
+
+      const response = await axios.put(`http://localhost:5001/api/leaves/${leaveId}`, {
+        status: 'Rejected'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Leave rejected successfully:', response.data);
+      alert('Leave request rejected successfully!');
+      
+      // Refresh the leaves data
+      if (onLeaveUpdate) {
+        onLeaveUpdate();
+      }
+    } catch (error) {
+      console.error('Error rejecting leave:', error);
+      
+      if (error.response) {
+        alert(error.response.data.message || 'Failed to reject leave request');
+      } else if (error.request) {
+        alert('Network error. Please check your connection.');
+      } else {
+        alert('An unexpected error occurred. Please try again.');
+      }
+    }
+  };
+
+  const handleViewDetails = (leave) => {
+    console.log("View leave details:", leave);
+    // Navigate to readonly leave details page
+    navigate('/leave-details', { 
+      state: { 
+        leaveData: leave,
+        readonly: true
+      } 
+    });
+  };
+
+  // Ensure leaves is always an array
+  const safeLeaves = Array.isArray(leaves) ? leaves : [];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -61,9 +206,9 @@ const LeaveTable = ({ leaves }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {leaves.map((leave) => (
+            {safeLeaves.map((leave, index) => (
               <TableRow
-                key={leave.id}
+                key={leave._id || leave.id || index}
                 sx={{
                   "&:nth-of-type(odd)": { backgroundColor: "action.hover" },
                   "&:hover": { backgroundColor: "action.selected" },
@@ -82,21 +227,53 @@ const LeaveTable = ({ leaves }) => {
                 </TableCell>
 
                 <TableCell align="center">
-                  {leave.status === "Pending" && (
+                  {isAdmin ? (
+                    // Admin actions
                     <>
                       <IconButton
-                        color="primary"
-                        onClick={() => handleEdit(leave.id)}
+                        color="info"
+                        onClick={() => handleViewDetails(leave)}
+                        title="View Details"
                       >
-                        <EditIcon />
+                        <VisibilityIcon />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleCancel(leave.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      {leave.status === "Pending" && (
+                        <>
+                          <IconButton
+                            color="success"
+                            onClick={() => handleApprove(leave._id || leave.id)}
+                            title="Approve"
+                          >
+                            <CheckIcon />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            onClick={() => handleReject(leave._id || leave.id)}
+                            title="Reject"
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                        </>
+                      )}
                     </>
+                  ) : (
+                    // Employee actions
+                    leave.status === "Pending" && (
+                      <>
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleEdit(leave)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleCancel(leave._id || leave.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </>
+                    )
                   )}
                 </TableCell>
               </TableRow>
