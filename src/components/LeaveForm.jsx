@@ -15,22 +15,25 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { createLeave, updateLeave } from "../store/slices/leavesSlice";
 
 
 
 const LeaveForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector((state) => state.leaves);
+  
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [reason, setReason] = useState("");
   const [openSnack, setOpenSnack] = useState(false);
   const [snackMessage, setSnackMessage] = useState("");
   const [snackSeverity, setSnackSeverity] = useState("success");
-  const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [leaveId, setLeaveId] = useState(null);
 
@@ -73,100 +76,53 @@ const LeaveForm = () => {
       return;
     }
 
+    // Prepare the leave data
+    const leaveData = {
+      fromDate: fromDate.toISOString(),
+      toDate: toDate.toISOString(),
+      reason: reason.trim()
+    };
+
     try {
-      setLoading(true);
-      
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      
-      console.log('Token:', token ? 'Present' : 'Missing');
-      
-      if (!token) {
-        setSnackMessage("No authentication token found. Please login again.");
+      let result;
+      if (editMode) {
+        result = await dispatch(updateLeave({ leaveId, leaveData }));
+        if (updateLeave.fulfilled.match(result)) {
+          setSnackMessage("Leave updated successfully!");
+          setSnackSeverity("success");
+          setOpenSnack(true);
+        }
+      } else {
+        result = await dispatch(createLeave(leaveData));
+        if (createLeave.fulfilled.match(result)) {
+          setSnackMessage("Leave applied successfully!");
+          setSnackSeverity("success");
+          setOpenSnack(true);
+        }
+      }
+
+      if (createLeave.fulfilled.match(result) || updateLeave.fulfilled.match(result)) {
+        // Reset form
+        setFromDate(null);
+        setToDate(null);
+        setReason("");
+        
+        // Navigate back to employee dashboard after a short delay
+        setTimeout(() => {
+          navigate('/employee');
+        }, 2000);
+      } else {
+        // Handle error
+        setSnackMessage(error || "An error occurred");
         setSnackSeverity("error");
         setOpenSnack(true);
-        return;
       }
-
-      // Prepare the leave data (backend will extract employee ID from JWT token)
-      const leaveData = {
-        fromDate: fromDate.toISOString(),
-        toDate: toDate.toISOString(),
-        reason: reason.trim()
-      };
-
-      // Additional validation and debugging
-      console.log('Date validation:');
-      console.log('From date object:', fromDate);
-      console.log('To date object:', toDate);
-      console.log('From date ISO:', fromDate.toISOString());
-      console.log('To date ISO:', toDate.toISOString());
-      console.log('Reason length:', reason.trim().length);
-
-      console.log('Submitting leave data:', leaveData);
-      console.log('Edit mode:', editMode);
-      console.log('Leave ID:', leaveId);
-      console.log('Token present:', !!token);
-
-      let response;
-      if (editMode) {
-        // Update existing leave
-        console.log('Making PUT request to:', `http://localhost:5001/api/leaves/${leaveId}`);
-        response = await axios.put(`http://localhost:5001/api/leaves/${leaveId}`, leaveData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('Leave updated successfully:', response.data);
-        setSnackMessage("Leave updated successfully!");
-      } else {
-        // Create new leave
-        console.log('Making POST request to:', 'http://localhost:5001/api/leaves');
-        response = await axios.post('http://localhost:5001/api/leaves', leaveData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('Leave submitted successfully:', response.data);
-        setSnackMessage("Leave applied successfully!");
-      }
-      
-      setSnackSeverity("success");
-      setOpenSnack(true);
-      
-      // Reset form
-      setFromDate(null);
-      setToDate(null);
-      setReason("");
-      
-      // Navigate back to employee dashboard after a short delay
-      setTimeout(() => {
-        navigate('/employee');
-      }, 2000);
 
     } catch (error) {
       console.error('Error submitting leave:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Error headers:', error.response?.headers);
-      
-      if (error.response) {
-        const errorMessage = error.response.data?.message || 
-                           error.response.data?.error || 
-                           `Server error (${error.response.status})`;
-        setSnackMessage(errorMessage);
-        console.error('Backend error details:', error.response.data);
-      } else if (error.request) {
-        setSnackMessage("Network error. Please check your connection.");
-      } else {
-        setSnackMessage("An unexpected error occurred. Please try again.");
-      }
+      setSnackMessage("An unexpected error occurred. Please try again.");
       setSnackSeverity("error");
       setOpenSnack(true);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -241,7 +197,7 @@ const LeaveForm = () => {
                     color="primary"
                     endIcon={<SendIcon />}
                     type="submit"
-                    disabled={loading}
+                    disabled={isLoading}
                     sx={{
                       px: 3,
                       py: 1.2,
@@ -251,7 +207,7 @@ const LeaveForm = () => {
                       textTransform: "none",
                     }}
                   >
-                    {loading ? (editMode ? "Updating..." : "Submitting...") : (editMode ? "Update Leave" : "Apply Leave")}
+                    {isLoading ? (editMode ? "Updating..." : "Submitting...") : (editMode ? "Update Leave" : "Apply Leave")}
                   </Button>
               </Stack>
 

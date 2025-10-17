@@ -5,10 +5,12 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAppDispatch } from '../store/hooks';
+import { deleteLeave, approveLeave, rejectLeave } from '../store/slices/leavesSlice';
 
 const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const handleEdit = (leave) => {
     console.log("Edit leave:", leave);
@@ -27,36 +29,18 @@ const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('No authentication token found. Please login again.');
-        return;
-      }
-
-      const response = await axios.delete(`http://localhost:5001/api/leaves/${leaveId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const result = await dispatch(deleteLeave(leaveId));
+      if (deleteLeave.fulfilled.match(result)) {
+        alert('Leave request cancelled successfully!');
+        if (onLeaveUpdate) {
+          onLeaveUpdate();
         }
-      });
-
-      console.log('Leave cancelled successfully:', response.data);
-      alert('Leave request cancelled successfully!');
-      
-      // Refresh the leaves data
-      if (onLeaveUpdate) {
-        onLeaveUpdate();
+      } else {
+        alert('Failed to cancel leave request');
       }
     } catch (error) {
       console.error('Error cancelling leave:', error);
-      
-      if (error.response) {
-        alert(error.response.data.message || 'Failed to cancel leave request');
-      } else if (error.request) {
-        alert('Network error. Please check your connection.');
-      } else {
-        alert('An unexpected error occurred. Please try again.');
-      }
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -67,38 +51,18 @@ const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('No authentication token found. Please login again.');
-        return;
-      }
-
-      const response = await axios.put(`http://localhost:5001/api/leaves/${leaveId}`, {
-        status: 'Approved'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const result = await dispatch(approveLeave(leaveId));
+      if (approveLeave.fulfilled.match(result)) {
+        alert('Leave request approved successfully!');
+        if (onLeaveUpdate) {
+          onLeaveUpdate();
         }
-      });
-
-      console.log('Leave approved successfully:', response.data);
-      alert('Leave request approved successfully!');
-      
-      // Refresh the leaves data
-      if (onLeaveUpdate) {
-        onLeaveUpdate();
+      } else {
+        alert('Failed to approve leave request');
       }
     } catch (error) {
       console.error('Error approving leave:', error);
-      
-      if (error.response) {
-        alert(error.response.data.message || 'Failed to approve leave request');
-      } else if (error.request) {
-        alert('Network error. Please check your connection.');
-      } else {
-        alert('An unexpected error occurred. Please try again.');
-      }
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -108,38 +72,18 @@ const LeaveTable = ({ leaves = [], onLeaveUpdate, isAdmin = false }) => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('No authentication token found. Please login again.');
-        return;
-      }
-
-      const response = await axios.put(`http://localhost:5001/api/leaves/${leaveId}`, {
-        status: 'Rejected'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const result = await dispatch(rejectLeave(leaveId));
+      if (rejectLeave.fulfilled.match(result)) {
+        alert('Leave request rejected successfully!');
+        if (onLeaveUpdate) {
+          onLeaveUpdate();
         }
-      });
-
-      console.log('Leave rejected successfully:', response.data);
-      alert('Leave request rejected successfully!');
-      
-      // Refresh the leaves data
-      if (onLeaveUpdate) {
-        onLeaveUpdate();
+      } else {
+        alert('Failed to reject leave request');
       }
     } catch (error) {
       console.error('Error rejecting leave:', error);
-      
-      if (error.response) {
-        alert(error.response.data.message || 'Failed to reject leave request');
-      } else if (error.request) {
-        alert('Network error. Please check your connection.');
-      } else {
-        alert('An unexpected error occurred. Please try again.');
-      }
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 

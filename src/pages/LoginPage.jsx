@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Paper,
@@ -7,17 +7,40 @@ import {
   Divider,
   TextField,
   Button,
+  Alert,
+  CircularProgress,
+  Box,
 } from "@mui/material";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { loginUser, checkAuthStatus, clearError } from "../store/slices/authSlice";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, isLoading, error, role } = useAppSelector((state) => state.auth);
+  
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    dispatch(checkAuthStatus());
+  }, [dispatch]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'user') {
+        navigate('/employee');
+      }
+    }
+  }, [isAuthenticated, role, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,46 +51,18 @@ const LoginPage = () => {
       return;
     }
 
-    try {
-      // Make API call to backend login endpoint using axios
-      const response = await axios.post('http://localhost:5001/api/auth/login', {
-        name: name.trim(),
-        password: password.trim()
-      });
-      
-      const data = response.data;
-      console.log('Login response data:', data);
-      
-      // Store token and user info
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userRole', data.role);
-      localStorage.setItem('userName', data.name);
-      
-      // Role-based redirection
-      if (data.role === 'admin') {
-        navigate('/admin');
-      } else if (data.role === 'user') {
-        navigate('/employee');
-      } else {
-        alert("Invalid user role");
-        return;
-      }
-      
-      // Reset form
+    // Clear any previous errors
+    dispatch(clearError());
+
+    // Dispatch login action
+    const result = await dispatch(loginUser({ name: name.trim(), password: password.trim() }));
+    
+    if (loginUser.fulfilled.match(result)) {
+      // Login successful, navigation will be handled by useEffect
       setName("");
       setPassword("");
-    } catch (error) {
-      console.error('Login error:', error);
-      
-      // Handle axios error response
-      if (error.response) {
-        alert(error.response.data.message || "Login failed");
-      } else if (error.request) {
-        alert("Network error. Please check your connection.");
-      } else {
-        alert("An unexpected error occurred. Please try again.");
-      }
     }
+    // Error handling is done in the Redux slice
   };
 
   return (
@@ -91,6 +86,12 @@ const LoginPage = () => {
           Login
         </Typography>
         <Divider sx={{ mb: 4 }} />
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
         
         <Stack
           component="form"
@@ -124,8 +125,9 @@ const LoginPage = () => {
           <Button
             variant="contained"
             color="primary"
-            endIcon={<LoginIcon />}
+            endIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
             type="submit"
+            disabled={isLoading}
             fullWidth
             sx={{
               px: 3,
@@ -137,7 +139,7 @@ const LoginPage = () => {
               mt: 2,
             }}
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
         </Stack>
       </Paper>
